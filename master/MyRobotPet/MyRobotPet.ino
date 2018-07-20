@@ -4,14 +4,17 @@
 #include "SPI.h"
 #include "LedControl.h"
 #include "Servo\src\Servo.h"
-
+/*
+pub:NodeToAnd
+sub:AndToNode
+	PyToNode
+*/
 //#include "WaveHC.h"
 //#include "WaveUtil.h"
 /*
 	2018/7/19  bug和未完成的功能的情况：
-	1.声音可能做不了了
-	2.控制的衔接
-	3,新的表情的设计
+	1。控制的设计
+	2。
 
 */
 
@@ -19,13 +22,19 @@
 const char* ssid = "Napoleon";
 const char* password = "19980909qaz";
 const char* mqtt_server = "123.206.127.199";
-const char* outTopic = "NodesTell";
-const char* inTopic = "PyMsg";
+
 WiFiClient espClient;
 PubSubClient client(espClient);
-char msg[50];
-byte recieve[100];
-
+long lastMsg = 0;
+int value = 0;
+char msgfromAnd[60];
+char msgtoAnd[40];
+byte msgfromPy[200];
+//控制的部分,也即json格式传输的msg
+uint8_t
+BeControlled = 0, //查看是否被控制
+neckcon = 0,
+facecon = 0;
 //LED控制的引脚
 #define CLK		  D2     
 #define CS        D3    
@@ -283,15 +292,7 @@ const int decay = 30000;  //衰退时间
 
 unsigned long checkMillis,touchMillis,nowMillis; //各种时间的定义
 
-//控制的部分,也即json格式传输的msg
-uint8_t 
-BeControlled = 0, //查看是否被控制
-neckcon = 0,
-facecon = 0,
-
-						 //控制部分的表情
-
-
+ //控制部分的表情
 //下面是声音的部分
 //SdReader card;    // 整个卡的信息
 //FatVolume vol;    // 保存分区信息
@@ -305,6 +306,7 @@ facecon = 0,
 
 void setup()
 {
+	Serial.begin(115200);
 	pinMode(D6, INPUT);
 	randomSeed(analogRead(analog));
 	myser.attach(wir1);
@@ -318,7 +320,7 @@ void setup()
 	//wifi和mqtt的设定
 	setup_wifi();//连接wifi
 	client.setServer(mqtt_server, 1883);
-	client.setCallback(callback);  //只想intopic中的那个消息指针
+	client.setCallback(Receive); //只想intopic中的那个消息指针
 
 	//Wavehc库的设定
 	//如果sd卡初始化失败
@@ -362,40 +364,73 @@ void setup_wifi() {
 	//Serial.println("IP address: ");
 	//Serial.println(WiFi.localIP());
 }
-void callback(char* topic, byte* payload, unsigned int length) {
-	//接收的函数，topic为接收订阅的主题，payload为长度，最后一个为payload的长度
-	Serial.print("Message arrived [");
+void Receive(char* topic, byte* payload, unsigned int length) {
+
+	Serial.print("Message from  [");
 	Serial.print(topic);
 	Serial.print("] ");
-	for (int i = 0; i < length; i++) {
-		recieve[i] = (byte)payload[i];
-		Serial.print(recieve[i]);
-		Serial.print(" ");
+	if (!strcmp(topic, "AndToNode"))
+	{
+		for (int i = 0; i < length; i++)
+		{
+			msgfromAnd[i] = payload[i];
+		}
+		decodeJson(msgfromAnd);
 	}
-	Serial.println();
 
+	else {
+		for (int i = 0; i < length; i++) {
+			msgfromPy[i] = (byte)payload[i];
+			Serial.print(msgfromPy[i]);
+			Serial.print(" ");
+		}
+		Serial.println();
+	}
+}
+void decodeJson(char msg[]) {
+	//解析AndToNode
+	//如何解析不同的东西，难道格式写一样？？
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& root = jsonBuffer.parseObject(msg);
+	BeControlled = root["BeControlled"];
+	neckcon = root["neckcon"];
+	facecon = root["facecon"];
+
+	Serial.print("BeControlled:");
+	Serial.print(BeControlled);
+	Serial.print("neckcon:");
+	Serial.print(neckcon);
+	Serial.print("facecon:");
+	Serial.println(facecon);
 }
 void encodeJson() {
 	//装载json
-	DynamicJsonBuffer jsonBuffer;//动态json对象
-	JsonObject& root1 = jsonBuffer.createObject(); //创建一个新的对象
-	root1["Humidity"] = humidity; //key为Humidity的value为humidity
-	root1["Temperature"] = temperature;
-	//  root1.prettyPrintTo(Serial);
-	root1.printTo(msg);//把json格式的转换为字符串传入msg中
-}
-void decodeJson(char msg[100]) {
-	//解析json
 	DynamicJsonBuffer jsonBuffer;
-	JsonObject& root = jsonBuffer.parseObject(msg);//解析一个字符串对象
-	float temp = root["Temperature"];
-	//将key为temperature对应的value存入temp中
-	float hum = root["Humidity"];
-
-	Serial.println(temp);
-	Serial.println(hum);
-
+	JsonObject& root1 = jsonBuffer.createObject();
+	root1["mood"] = mood;
+	root1["TouchReact"] = TouchReact;
+	root1.printTo(msgtoAnd);
 }
+void reconnect() {
+	while (!client.connected()) {
+		Serial.print("Attempting MQTT connection...");
+		if (client.connect("ESP8266Client")) {
+			Serial.println("connected");
+			//client.publish(outTopic, "hello world");
+			client.subscribe("AndToNode", 1); //这仅仅是一个订阅而已，订阅了之前设定的主题
+			client.subscribe("PyToNode", 1);
+		}
+		else {
+			Serial.print("failed, rc=");
+			Serial.print(client.state());
+			Serial.println(" try again in 5 seconds");
+			delay(5000);
+		}
+	}
+}
+
+
+
 //以下是非控制部分
 void MqttAndJson()
 {
@@ -410,10 +445,13 @@ void controlface()
 {
 	//控制表情的部分
 }
-void getwords()
+void WriteWordsColumn()
 {
-	//从mqtt中接收到的字
-	//平时的时候这个key为0
+	//书写接收到的字，注意衔接
+}
+void LinkUP()
+{
+	//关于衔接的函数，防止交互出现问题
 }
 void GazeAprh(int8_t x,int8_t y)
 {
@@ -517,7 +555,7 @@ uint8_t JudgeBlinkTime()
 	else return 0;
 
 }
-/*
+
 void MoveNeck()
 {
 //移动舵机
@@ -525,7 +563,7 @@ myser.write(gazeX * 10);
 myser2.write(gazeY * 10);
 
 }
-*/
+
 
 void CheckTouch()
 {
@@ -560,12 +598,19 @@ void CheckTouch()
 }
 void loop()
 {
+	
 	BlinkFace();
 	MoveGaze();
 
 	touchMillis = millis();
 	while (millis() - touchMillis < 40)
 		CheckTouch();
+	if (!client.connected()) {
+		reconnect();//先让client连上，同时订阅相关的主题
+	}
+	client.loop();
+	encodeJson();
+	client.publish("NodeToAnd", msgtoAnd);
 
 }
 
