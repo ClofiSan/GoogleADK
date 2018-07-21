@@ -9,6 +9,9 @@
   pub:NodeToAnd
   sub:AndToNode
     PyToNode
+
+	2017bug:
+	如何解决getword的问题
 */
 const char* ssid = "Napoleon";
 const char* password = "19980909qaz";
@@ -23,8 +26,8 @@ PubSubClient client(espClient);
 long lastMsg = 0;
 int value = 0;
 char msgfromAnd[50];
-char msgtoAnd[20];
-byte msgfromPy[200];
+char msgtoAnd[50];
+//byte msgfromPy[200];
 
 byte
 normalFace[][8] = {    // Eye animation frames
@@ -95,6 +98,7 @@ facecon = 0;
 const uint8_t step = 10;
 uint8_t neckLR = 0;	//这是一个坑，注意测试修改
 uint8_t	neckUD = 0;
+byte *msgfromPy;
 
 #define CLK		  D2     
 #define CS        D3    
@@ -134,9 +138,25 @@ byte happy[8]{
 	B0000000,
 };
 byte angry[8]{
+	B00000000,
+	B10000001,
+	B01100110,
+	B00000000,
+	B00011000,
+	B00111100,
+	B01111110,
+	B11111111,
 
 };
 byte sad[8]{
+	B00000000,
+	B00100100,
+	B01000010,
+	B10000001,
+	B00000000,
+	B00111100,
+	B01000010,
+	B10000001,
 
 };
 
@@ -208,13 +228,14 @@ void Receive(char* topic, byte* payload, unsigned int length) {
   }
 
   else {
+	  msgfromPy = new byte[300];
 	int i = 0;
     for ( i = 0; i < length; i++) {
       msgfromPy[i] = (byte)payload[i];
       Serial.print(msgfromPy[i]);
       Serial.print(" ");
     }
-	msgfromPy[i] = '\0';
+	msgfromPy[i] = '\0'; 
     Serial.println();
 
   }
@@ -252,56 +273,63 @@ void loop() {
 	  LinkUP();
 	  control();
   }	  
+  
 
 
+}
+void FaceControl(byte *face)
+{
+	lc.clearDisplay(0);
+	DrawFaceByColumn(face);
+	delay(2000);
+	//blinkTime = random(5, 180);
 }
 void control()
 {
 	//整个控制的环节
 	//舵机的控制输出
 	//neckLR和neckUD需要初始化
-	myser.write(neckLR);
-	myser2.write(neckUD);
+
+	//重点就在这里，如何设计这个部分
+	myser.write(neckUD);
+	myser2.write(neckLR);
 	//控制face其实就是一个分支
 
 	//没有输入控制信号的时候应该是一张normalface
-	DrawFaceByColumn(normalFace[(blinkIndex[JudgeBlinkTime()])]);
-	if (--blinkTime == 0) blinkTime = random(5, 180);
+	//DrawFaceByColumn(normalFace[(blinkIndex[JudgeBlinkTime()])]);
+	//if (--blinkTime == 0) blinkTime = random(5, 180);
+	
 
 	
 	switch (facecon)
 	{//感觉像是嵌入式开发
 	case 1: {
-		lc.clearDisplay();
-		DrawFaceByColumn(heart);
-		delay(2000);
-		blinkTime = random(5, 180);
+		FaceControl(heart);
 		break;
 	}case 2: {
-		DrawFaceByColumn(snicker);
-		delay(2000);
-		blinkTime = random(5, 180);
+		FaceControl(happy);
 			break;
 	}case 3: {
-		DrawFaceByColumn(happy);
-		delay(2000);
-		blinkTime = random(5, 180);
+		FaceControl(sad);
 			break;
 	}case 4: {
-		DrawFaceByColumn(angry);
-		delay(2000);
-		blinkTime = random(5, 180);
+		FaceControl(angry);
 			break;
 	}case 5: {
-		DrawFaceByColumn(sad);
-		delay(2000);
-		blinkTime = random(5, 180);
+		FaceControl(snicker);
 			break;
+	}case 6: {
+		lc.clearDisplay(0);
+		WriteWordsColumn();
+		break;
 	}
 	default: {
 		break;
 	}	
 	}
+
+	if (neckcon)
+		controlneck();
 	
 
 }
@@ -348,11 +376,12 @@ void WriteWordsColumn()
 			delay(100);
 		lc.setColumn(0, row,msgfromPy[n]);
 	}
+	delete msgfromPy;
 }
 void LinkUP()
 {
-	//关于衔接的函数，防止交互出现问题
-	   
+	for(int i=0;i<=800;i++)
+	DrawFaceByColumn(snicker);
 }
 
 
