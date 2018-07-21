@@ -3,22 +3,22 @@
 #include <ArduinoJson.h>
 #include "SPI.h"
 #include "LedControl.h"
-#include "Servo\src\Servo.h"
+#include <Servo.h>
 /*
 pub:NodeToAnd
 sub:AndToNode
-	PyToNode
+PyToNode
 */
 //#include "WaveHC.h"
 //#include "WaveUtil.h"
 /*
-	2018/7/19  bug��δ��ɵĹ��ܵ������
-	1�����Ƶ����
-	2��
+2018/7/19  bug锟斤拷未锟斤拷傻墓锟斤拷艿锟斤拷锟斤拷锟斤拷
+1锟斤拷锟斤拷锟狡碉拷锟斤拷锟�
+2锟斤拷
 
 */
 
-//wifi�趨��mqtt���������趨
+//wifi锟借定锟斤拷mqtt锟斤拷锟斤拷锟斤拷锟斤拷锟借定
 const char* ssid = "Napoleon";
 const char* password = "19980909qaz";
 const char* mqtt_server = "123.206.127.199";
@@ -30,24 +30,24 @@ int value = 0;
 char msgfromAnd[60];
 char msgtoAnd[40];
 byte msgfromPy[200];
-//���ƵĲ���,Ҳ��json��ʽ�����msg
+//锟斤拷锟狡的诧拷锟斤拷,也锟斤拷json锟斤拷式锟斤拷锟斤拷锟絤sg
 uint8_t
-BeControlled = 0, //�鿴�Ƿ񱻿���
+BeControlled = 0, //锟介看锟角否被匡拷锟斤拷
 neckcon = 0,
 facecon = 0;
-//LED���Ƶ�����
-#define CLK		  D2     
+//LED锟斤拷锟狡碉拷锟斤拷锟斤拷
+#define CLK     D2     
 #define CS        D3    
 #define DIN       D1      
 LedControl lc = LedControl(DIN, CLK, CS, 1);
 
-//����趨
+//锟斤拷锟斤拷瓒�
 #define wir1 D7
 #define wir2 D8
 const uint8_t step = 10;
-uint8_t neckLR = 0;	//����һ���ӣ�ע������޸�
-uint8_t	neckUD = 0;
-
+uint8_t neckLR = 0; //锟斤拷锟斤拷一锟斤拷锟接ｏ拷注锟斤拷锟斤拷锟斤拷薷锟�
+uint8_t neckUD = 0;
+uint8_t istouch = 0;
 byte
 sadFace[][8] = {    // Eye animation frames
 	{
@@ -70,7 +70,7 @@ sadFace[][8] = {    // Eye animation frames
 		B11111111,
 		B11111111
 	},
-			
+
 	{
 		B00100100,
 		B01000010,
@@ -80,26 +80,26 @@ sadFace[][8] = {    // Eye animation frames
 		B01111110,
 		B11111111,
 		B11111111 }
-				,
-	{
-		B00100100,
-		B01000010,
-		B10000001,
-		B00000000,
-		B00000000,
-		B00000000,
-		B01111110,
-		B11111111 
-	},
-	{
-		B00100100,         // Fully closed sad eye
-		B01000010,
-		B10000001,
-		B00000000,
-		B00000000,
-		B00000000,
-		B00000000,
-		B11111111 }
+		,
+		{
+			B00100100,
+			B01000010,
+			B10000001,
+			B00000000,
+			B00000000,
+			B00000000,
+			B01111110,
+			B11111111
+		},
+		{
+			B00100100,         // Fully closed sad eye
+			B01000010,
+			B10000001,
+			B00000000,
+			B00000000,
+			B00000000,
+			B00000000,
+			B11111111 }
 
 };
 
@@ -115,27 +115,27 @@ normalFace[][8] = {    // Eye animation frames
 		B01111110,
 		B00111100 }
 		,
-	{
-		B00000000,
-		B01111110,
-		B11111111,
-		B11111111,
-		B11111111,
-		B11111111,
-		B01111110,
-		B00111100 }
+		{
+			B00000000,
+			B01111110,
+			B11111111,
+			B11111111,
+			B11111111,
+			B11111111,
+			B01111110,
+			B00111100 }
 			,
-	{
-		B00000000,
-		B00000000,
-		B00111100,
-		B11111111,
-		B11111111,
-		B11111111,
-		B00111100,
-		B00000000 }
+			{
+				B00000000,
+				B00000000,
+				B00111100,
+				B11111111,
+				B11111111,
+				B11111111,
+				B00111100,
+				B00000000 }
 				,
-	{
+				{
 					B00000000,
 					B00000000,
 					B00000000,
@@ -209,7 +209,7 @@ happyFace[][8] = {    // Eye animation frames
 						B01111110 }
 };
 
-byte 
+byte
 botherFace[][8] = {    // Eye animation frames
 	{
 		B10000001,         // Fully open annoyed eye
@@ -268,40 +268,40 @@ Servo myser;
 Servo myser2;
 
 
-uint8_t 
-blinkIndex[] = { 1, 2, 3, 4, 3, 2, 1 },	//sizeof = 7 
-blinkTime = 100,					//��ʵ��գ�۵�����
-gazeTime = 75,						//��һ���۾��ƶ���ʱ�䵹��ʱ//ע������
-gazeMove = 50;						//���������ʱ��
+uint8_t
+blinkIndex[] = { 1, 2, 3, 4, 3, 2, 1 }, //sizeof = 7 
+blinkTime = 100,          //锟斤拷实锟斤拷眨锟桔碉拷锟斤拷锟斤拷
+gazeTime = 75,            //锟斤拷一锟斤拷锟桔撅拷锟狡讹拷锟斤拷时锟戒倒锟斤拷时//注锟斤拷锟斤拷锟斤拷
+gazeMove = 50;            //锟斤拷锟斤拷锟斤拷锟斤拷锟绞憋拷锟�
 int8_t
-gazeX = 3, gazeY = 3,				//���������
-newX = 3, newY = 3,					//�µ����������
-dX = 0, dY = 0;						
+gazeX = 3, gazeY = 3,       //锟斤拷锟斤拷锟斤拷锟斤拷锟�
+newX = 3, newY = 3,         //锟铰碉拷锟斤拷锟斤拷锟斤拷锟斤拷锟�
+dX = 0, dY = 0;
 
 
-int TouchNum = 0; 
+int TouchNum = 0;
 int TouchReact = 15;
 byte mood = 1;
-//const byte vibration PROGMEM = ;//���������������� 
-//const int TouchLevel PROGMEM = 512;//������λ�ĵȼ�
-#define vibration D6
-long PreMillis = 0;        
+//const byte vibration PROGMEM = ;//锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 
+//const int TouchLevel PROGMEM = 512;//锟斤拷锟斤拷锟斤拷位锟侥等硷拷
+#define vibration D5
+long PreMillis = 0;
 #define analog A0
 
-const int decay = 30000;  //˥��ʱ��       
+const int decay = 30000;  //衰锟斤拷时锟斤拷       
 
-unsigned long checkMillis,touchMillis,nowMillis; //����ʱ��Ķ���
+unsigned long checkMillis, touchMillis, nowMillis; //锟斤拷锟斤拷时锟斤拷亩锟斤拷锟�
 
- //���Ʋ��ֵı���
-//�����������Ĳ���
-//SdReader card;    // ����������Ϣ
-//FatVolume vol;    // ���������Ϣ
-//FatReader root;   //���ļ�ϵͳ����Ŀ¼��Ϣ
-//WaveHC wave;      //  ���������Ķ���һ��ֻ����һ��
+												   //锟斤拷锟狡诧拷锟街的憋拷锟斤拷
+												   //锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟侥诧拷锟斤拷
+												   //SdReader card;    // 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷息
+												   //FatVolume vol;    // 锟斤拷锟斤拷锟斤拷锟斤拷锟较�
+												   //FatReader root;   //锟斤拷锟侥硷拷系统锟斤拷锟斤拷目录锟斤拷息
+												   //WaveHC wave;      //  锟斤拷锟斤拷锟斤拷锟斤拷锟侥讹拷锟斤拷一锟斤拷只锟斤拷锟斤拷一锟斤拷
 
-//uint8_t dirLevel; // //�ļ�/Ŀ¼���Ƶ��������� 
-//dir_t dirBuf;     //  �ļ��Ķ�Ŀ¼�ĵĻ�����
-//FatReader f;      // �������ڲ��ŵ�����
+												   //uint8_t dirLevel; // //锟侥硷拷/目录锟斤拷锟狡碉拷锟斤拷锟斤拷锟斤拷锟斤拷 
+												   //dir_t dirBuf;     //  锟侥硷拷锟侥讹拷目录锟侥的伙拷锟斤拷锟斤拷
+												   //FatReader f;      // 锟斤拷锟斤拷锟斤拷锟节诧拷锟脚碉拷锟斤拷锟斤拷
 
 
 void setup()
@@ -312,38 +312,38 @@ void setup()
 	myser.attach(wir1);
 	myser2.attach(wir2);
 
-	//LedControl�Ŀ�Ķ���
-	lc.shutdown(0, false);//�ڵ�ģʽ
-	lc.setIntensity(0, 5);//����LED����
-	lc.clearDisplay(0);	  //�����Ļ
+	//LedControl锟侥匡拷亩锟斤拷锟�
+	lc.shutdown(0, false);//锟节碉拷模式
+	lc.setIntensity(0, 2);//锟斤拷锟斤拷LED锟斤拷锟斤拷
+	lc.clearDisplay(0);   //锟斤拷锟斤拷锟侥�
 
-	//wifi��mqtt���趨
-	setup_wifi();//����wifi
-	client.setServer(mqtt_server, 1883);
-	client.setCallback(Receive); //ֻ��intopic�е��Ǹ���Ϣָ��
+						  //wifi锟斤拷mqtt锟斤拷锟借定
+						  //setup_wifi();//锟斤拷锟斤拷wifi
+						  //client.setServer(mqtt_server, 1883);
+						  //client.setCallback(Receive); //只锟斤拷intopic锟叫碉拷锟角革拷锟斤拷息指锟斤拷
 
-	//Wavehc����趨
-	//���sd����ʼ��ʧ��
-/*	if (!card.init(true)) {
+						  //Wavehc锟斤拷锟斤拷瓒�
+						  //锟斤拷锟絪d锟斤拷锟斤拷始锟斤拷失锟斤拷
+						  /*  if (!card.init(true)) {
 
-	}
-	//��ʼ�������ж�
-	uint8_t part;
-	for (part = 0; part < 5; part++) {
-		if (vol.init(card, part))
-			break;
-	}
-	if (part == 5) {
-		sdErrorCheck();
-		while (1);
-	}
-	//�򿪸�Ŀ¼ʧ��
-	if (!root.openRoot(vol)) {
-	}
-	//��ӡ�������ļ�
-	root.ls(LS_R | LS_FLAG_FRAGMENTED);//������
+						  }
+						  //锟斤拷始锟斤拷锟斤拷锟斤拷锟叫讹拷
+						  uint8_t part;
+						  for (part = 0; part < 5; part++) {
+						  if (vol.init(card, part))
+						  break;
+						  }
+						  if (part == 5) {
+						  sdErrorCheck();
+						  while (1);
+						  }
+						  //锟津开革拷目录失锟斤拷
+						  if (!root.openRoot(vol)) {
+						  }
+						  //锟斤拷印锟斤拷锟斤拷锟斤拷锟侥硷拷
+						  root.ls(LS_R | LS_FLAG_FRAGMENTED);//锟斤拷锟斤拷锟斤拷
 
-*/
+						  */
 }
 
 void setup_wifi() {
@@ -388,8 +388,8 @@ void Receive(char* topic, byte* payload, unsigned int length) {
 	}
 }
 void decodeJson(char msg[]) {
-	//����AndToNode
-	//��ν�����ͬ�Ķ������ѵ���ʽдһ������
+	//锟斤拷锟斤拷AndToNode
+	//锟斤拷谓锟斤拷锟斤拷锟酵拷亩锟斤拷锟斤拷锟斤拷训锟斤拷锟绞叫匆伙拷锟斤拷锟斤拷锟�
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& root = jsonBuffer.parseObject(msg);
 	BeControlled = root["BeControlled"];
@@ -404,7 +404,7 @@ void decodeJson(char msg[]) {
 	Serial.println(facecon);
 }
 void encodeJson() {
-	//װ��json
+	//装锟斤拷json
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& root1 = jsonBuffer.createObject();
 	root1["mood"] = mood;
@@ -417,7 +417,7 @@ void reconnect() {
 		if (client.connect("ESP8266Client")) {
 			Serial.println("connected");
 			//client.publish(outTopic, "hello world");
-			client.subscribe("AndToNode", 1); //�������һ�����Ķ��ѣ�������֮ǰ�趨������
+			client.subscribe("AndToNode", 1); //锟斤拷锟斤拷锟斤拷锟揭伙拷锟斤拷锟斤拷亩锟斤拷眩锟斤拷锟斤拷锟斤拷锟街帮拷瓒拷锟斤拷锟斤拷锟�
 			client.subscribe("PyToNode", 1);
 		}
 		else {
@@ -431,35 +431,35 @@ void reconnect() {
 
 
 
-//�����Ƿǿ��Ʋ���
+//锟斤拷锟斤拷锟角非匡拷锟狡诧拷锟斤拷
 void MqttAndJson()
 {
-	//ִ��mqtt��صĲ���
+	//执锟斤拷mqtt锟斤拷氐牟锟斤拷锟�
 
 }
 void controlneck()
 {
-	//���ƶ��
+	//锟斤拷锟狡讹拷锟�
 }
 void controlface()
 {
-	//���Ʊ���Ĳ���
+	//锟斤拷锟狡憋拷锟斤拷牟锟斤拷锟�
 }
 void WriteWordsColumn()
 {
-	//��д���յ����֣�ע���ν�
+	//锟斤拷写锟斤拷锟秸碉拷锟斤拷锟街ｏ拷注锟斤拷锟轿斤拷
 }
 void LinkUP()
 {
-	//�����νӵĺ�������ֹ������������
+	//锟斤拷锟斤拷锟轿接的猴拷锟斤拷锟斤拷锟斤拷止锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷
 }
-void GazeAprh(int8_t x,int8_t y)
+void GazeAprh(int8_t x, int8_t y)
 {
-	//��setled�ٶȿ��ܻ���
-	lc.setLed(0, x, y, false);
-	lc.setLed(0, x+1, y, false);
-	lc.setLed(0, x, y+1, false);
-	lc.setLed(0, x+1, y+1, false);
+	//锟斤拷setled锟劫度匡拷锟杰伙拷锟斤拷
+	lc.setLed(0, y, 7 - x, false);
+	lc.setLed(0, y + 1, 7 - x, false);
+	lc.setLed(0, y, 7 - (x + 1), false);
+	lc.setLed(0, y + 1, 7 - (x + 1), false);
 
 }
 void SetNewGaze() {
@@ -487,19 +487,19 @@ void SetNewGaze() {
 void MoveGaze()
 {
 	if (--gazeTime <= gazeMove) {
-		//ͫ�׵��趨�Ǵӵ����ͼ�����ڿ�2*2
-		//����ط�Ҫ��ͫ�׵ľ�λ�������ӽ��µ�λ��
-		//newX - (dX * gazeTime / gazeMove) �����������ӽ���
+		//瞳锟阶碉拷锟借定锟角从碉拷锟斤拷锟酵硷拷锟斤拷锟斤拷诳锟�2*2
+		//锟斤拷锟斤拷胤锟揭拷锟酵拷椎木锟轿伙拷锟斤拷锟斤拷锟斤拷咏锟斤拷碌锟轿伙拷锟�
+		//newX - (dX * gazeTime / gazeMove) 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟接斤拷锟斤拷
 		GazeAprh(newX - (dX * gazeTime / gazeMove), newY - (dY * gazeTime / gazeMove));
 		if (gazeTime == 0) {
 			gazeX = newX;
 			gazeY = newY;
 			do {
-				//new��λ�ù̶���Ԥ�õ����귶Χ���� Ҳ����һ��Բ
-				//��Ƴ������������ƶ����趨���µĶ���
-				//random�Ĳ�����ʵ����Ȧ������
-				//��Ϊ3�����������˿ճ�����2*2�������
-				//ÿ�ֱ����y��Χ����һ����
+				//new锟斤拷位锟矫固讹拷锟斤拷预锟矫碉拷锟斤拷锟疥范围锟斤拷锟斤拷 也锟斤拷锟斤拷一锟斤拷圆
+				//锟斤拷瞥锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷贫锟斤拷锟斤拷瓒拷锟斤拷碌亩锟斤拷锟�
+				//random锟侥诧拷锟斤拷锟斤拷实锟斤拷锟斤拷圈锟斤拷锟斤拷锟斤拷
+				//锟斤拷为3锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟剿空筹拷锟斤拷锟斤拷2*2锟斤拷锟斤拷锟斤拷锟�
+				//每锟街憋拷锟斤拷锟統锟斤拷围锟斤拷锟斤拷一锟斤拷锟斤拷
 				SetNewGaze();
 				dX = newX - 3;
 				dY = newY - 3;
@@ -508,34 +508,35 @@ void MoveGaze()
 		}
 	}
 	else {
-		//�۾�������ʱ��
+		//锟桔撅拷锟斤拷锟斤拷锟斤拷时锟斤拷
 		GazeAprh(gazeX, gazeY);
-		//MoveNeck();
+		MoveNeck();
 
 	}
-		
+
 }
 /*void DrawFaceByRow(byte *face)
 {
-	for (int i = 0; i<8; i++)
-	{
-		lc.setRow(0, i, face[i]);
-	}
-	
+for (int i = 0; i<8; i++)
+{
+lc.setRow(0, i, face[i]);
+}
+
 }*/
 void DrawFaceByColumn(byte *face)
 {
 	for (int i = 0; i<8; i++)
 	{
 		lc.setColumn(0, i, face[i]);
+		Serial.println("i am drawing");
 	}
 }
 void BlinkFace()
 {
-	//Ҫ����ֵ����ݣ�����˳��ʵ��գ�۵�Ч����Ҳ���ǰ���һ����˳��ȥ�ų����飬
-	//Ҳ����Ҫ����index��˳����
-	//��һ��������ȫ�ֵ�˳�򻭳�λͼ���Ͼ��������loop����ģ�Ҳ����˵ֻҪһ�γ��ֳ�һ��ͼ�ͺ���
-	//�ڶ������ʱ������������һ���µ�ʱ��
+	//要锟斤拷锟斤拷值锟斤拷锟斤拷荩锟斤拷锟斤拷锟剿筹拷锟绞碉拷锟秸ｏ拷鄣锟叫э拷锟斤拷锟揭诧拷锟斤拷前锟斤拷锟揭伙拷锟斤拷锟剿筹拷锟饺ワ拷懦锟斤拷锟斤拷椋�
+	//也锟斤拷锟斤拷要锟斤拷锟斤拷index锟斤拷顺锟斤拷锟斤拷
+	//锟斤拷一锟斤拷锟斤拷锟斤拷锟斤拷全锟街碉拷顺锟津画筹拷位图锟斤拷锟较撅拷锟斤拷锟斤拷锟斤拷锟絣oop锟斤拷锟斤拷模锟揭诧拷锟斤拷锟剿抵灰伙拷纬锟斤拷殖锟揭伙拷锟酵硷拷秃锟斤拷锟�
+	//锟节讹拷锟斤拷锟斤拷锟绞憋拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟揭伙拷锟斤拷碌锟绞憋拷锟�
 	lc.clearDisplay(0);
 	if (mood == 0)
 		DrawFaceByColumn(sadFace[(blinkIndex[JudgeBlinkTime()])]);
@@ -558,59 +559,73 @@ uint8_t JudgeBlinkTime()
 
 void MoveNeck()
 {
-//�ƶ����
-myser.write(gazeX * 10);
-myser2.write(gazeY * 10);
+	//锟狡讹拷锟斤拷锟�
+	int8_t y2 = 7 - gazeX;
+	int8_t x2 = gazeY;
+	myser.write(y2 * 10); //
+	myser2.write(180 - (x2 * 10));
 
 }
 
 
 void CheckTouch()
 {
-	//����Լ��Ƿ񱻴���
-	if (digitalRead(D6))
+
+	//锟斤拷锟斤拷约锟斤拷欠癖淮锟斤拷锟�
+
+  istouch  = digitalRead(D6);
+	if (istouch)
 	{
 		TouchNum++;
 		if (TouchNum % 200 == 0) {
 			TouchReact++;
-			//PlayTouchSong();
+      
 		}
 		if (TouchNum >= 1000)
 			TouchNum = 0;
-		
-	}
 
-	if (TouchReact <= 10) mood = 0;   
+	}
+	if (TouchReact <= 10) mood = 0;
 	else if (TouchReact <= 20) mood = 1;
 	else if (TouchReact <= 30) mood = 2;
 	else if (TouchReact > 30) mood = 3;
 
 	nowMillis = millis();
 	if (nowMillis - PreMillis > decay) {
-	
+
 		PreMillis = nowMillis;
 		TouchReact--;
 		if (TouchReact < 0) TouchReact = 0;
 		if (TouchReact == 30) TouchReact = 15;
 		if (TouchReact > 40) TouchReact = 40;
 	}
-
+ Serial.print("touchnum ");
+      Serial.print(TouchNum);
+      
+      Serial.print("mood ");
+      Serial.print(mood);
+     Serial.print("TouchReact ");
+      Serial.println(TouchReact);
 }
 void loop()
 {
-	
+
 	BlinkFace();
 	MoveGaze();
 
 	touchMillis = millis();
 	while (millis() - touchMillis < 40)
-		CheckTouch();
-	if (!client.connected()) {
-		reconnect();//����client���ϣ�ͬʱ������ص�����
+		{
+      istouch = 0;
+		  CheckTouch();
+		  }
+   
+	/*if (!client.connected()) {
+	reconnect();//锟斤拷锟斤拷client锟斤拷锟较ｏ拷同时锟斤拷锟斤拷锟斤拷氐锟斤拷锟斤拷锟�
 	}
 	client.loop();
 	encodeJson();
-	client.publish("NodeToAnd", msgtoAnd);
+	client.publish("NodeToAnd", msgtoAnd);*/
 
 }
 
@@ -619,96 +634,97 @@ void loop()
 */
 /*
 void error_P(const char *str) {
-//���Ҳ��
+//锟斤拷锟揭诧拷锟�
 PgmPrint("Error: ");
 SerialPrint_P(str);
 sdErrorCheck();
 while (1);
 }
 void sdErrorCheck(void) {
-	//��һ���ǹ���Sd��������
-	if (!card.errorCode()) return;
-	PgmPrint("\r\nSD I/O error: ");	
-	Serial.print(card.errorCode(), HEX);
-	PgmPrint(", ");
-	Serial.println(card.errorData(), HEX);
-	while (1);
+//锟斤拷一锟斤拷锟角癸拷锟斤拷Sd锟斤拷锟斤拷锟斤拷锟斤拷
+if (!card.errorCode()) return;
+PgmPrint("\r\nSD I/O error: ");
+Serial.print(card.errorCode(), HEX);
+PgmPrint(", ");
+Serial.println(card.errorData(), HEX);
+while (1);
 }
 void PlayVoice(FatReader &dir)
 {
-	FatReader file;
-	while (dir.readDir(dirBuf) > 0) {    //��ʼ���ļ��������е��ļ�
+FatReader file;
+while (dir.readDir(dirBuf) > 0) {    //锟斤拷始锟斤拷锟侥硷拷锟斤拷锟斤拷锟斤拷锟叫碉拷锟侥硷拷
 
-										 // �������dir����wav��ֱ������
-		if (!DIR_IS_SUBDIR(dirBuf) && strncmp_P((char *)&dirBuf.name[8], PSTR("WAV"), 3)) {
-			continue;
-		}
+// 锟斤拷锟斤拷锟斤拷锟絛ir锟斤拷锟斤拷wav锟斤拷直锟斤拷锟斤拷锟斤拷
+if (!DIR_IS_SUBDIR(dirBuf) && strncmp_P((char *)&dirBuf.name[8], PSTR("WAV"), 3)) {
+continue;
+}
 
-		Serial.println();            //�µ�һ��
+Serial.println();            //锟铰碉拷一锟斤拷
 
-		for (uint8_t i = 0; i < dirLevel; i++) {
-			Serial.write(' ');       // Ϊ�˶��ļ��Ľ���
-		}
-		if (!file.open(vol, dirBuf)) {        // ����޷���
-											  //      error("file.open failed");          // something went wrong
-		}
+for (uint8_t i = 0; i < dirLevel; i++) {
+Serial.write(' ');       // 为锟剿讹拷锟侥硷拷锟侥斤拷锟斤拷
+}
+if (!file.open(vol, dirBuf)) {        // 锟斤拷锟斤拷薹锟斤拷锟�
+//      error("file.open failed");          // something went wrong
+}
 
-		if (file.isDir()) {                   // �򿪵��Ƿ���һ���µ��ļ����ݹ���ļ�
-			printEntryName(dirBuf);
-			Serial.println();
-			dirLevel += 2;                      
-												
-			PlayVoice(file);                         
-			dirLevel -= 2;
-		}
-		else {
-			//�������dir
-			printEntryName(dirBuf);              
-			if (!wave.create(file)) {            // �ж��Ƿ���wav
-				putstring(" Not a valid WAV");     // ok skip it
-				return;
-			}
-			else {
-				Serial.println();                  
-				wave.play();                       
-				uint8_t n = 0;
-				while (wave.isplaying) {
-					//����������ʱ�򴮿���ʾ
-					putstring(".");
-					if (!(++n % 32))Serial.println();
-					delay(100);
-				}
-				sdErrorCheck();                    // everything OK?
-				if (wave.errors)Serial.println(wave.errors);     
-			}
-		}
-	}
+if (file.isDir()) {                   // 锟津开碉拷锟角凤拷锟斤拷一锟斤拷锟铰碉拷锟侥硷拷锟斤拷锟捷癸拷锟斤拷募锟�
+printEntryName(dirBuf);
+Serial.println();
+dirLevel += 2;
+
+PlayVoice(file);
+dirLevel -= 2;
+}
+else {
+//锟斤拷锟斤拷锟斤拷锟絛ir
+printEntryName(dirBuf);
+if (!wave.create(file)) {            // 锟叫讹拷锟角凤拷锟斤拷wav
+putstring(" Not a valid WAV");     // ok skip it
+return;
+}
+else {
+Serial.println();
+wave.play();
+uint8_t n = 0;
+while (wave.isplaying) {
+//锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷时锟津串匡拷锟斤拷示
+putstring(".");
+if (!(++n % 32))Serial.println();
+delay(100);
+}
+sdErrorCheck();                    // everything OK?
+if (wave.errors)Serial.println(wave.errors);
+}
+}
+}
 }
 void playcomplete(char *name) {
-	//��������һ������
-	playfile(name);
-	while (wave.isplaying) { 
-							 
-	}
-	
+//锟斤拷锟斤拷锟斤拷锟斤拷一锟斤拷锟斤拷锟斤拷
+playfile(name);
+while (wave.isplaying) {
+
+}
+
 }
 void playfile(char *name) {
-	
-	if (wave.isplaying) {		//����ڲ������������Ļ���ͣ����
-		wave.stop(); 
-	}
-	
-	if (!f.open(root, name)) {	//�����ʧ�ܵĻ���GG
-		Serial.print("can't open file");
-		Serial.println (name);
-		return;
-	}
-	
-	if (!wave.create(f)) {	//�ж��Ƿ���wav
-		Serial.println(name);
-		Serial.println("Not a WAV");
-	}
 
-	// ����
-	wave.play();
+if (wave.isplaying) {   //锟斤拷锟斤拷诓锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷幕锟斤拷锟酵ｏ拷锟斤拷锟�
+wave.stop();
+}
+
+if (!f.open(root, name)) {  //锟斤拷锟斤拷锟绞э拷艿幕锟斤拷锟紾G
+Serial.print("can't open file");
+Serial.println (name);
+return;
+}
+
+if (!wave.create(f)) {  //锟叫讹拷锟角凤拷锟斤拷wav
+Serial.println(name);
+Serial.println("Not a WAV");
+}
+
+// 锟斤拷锟斤拷
+wave.play();
 }*/
+
