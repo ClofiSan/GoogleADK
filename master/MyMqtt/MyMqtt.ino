@@ -95,10 +95,11 @@ facecon = 0;
 //舵机设定
 #define wir1 D7
 #define wir2 D8
-const uint8_t step = 10;
-uint8_t neckLR = 0;	//这是一个坑，注意测试修改
-uint8_t	neckUD = 0;
+uint8_t step = 10;
+uint8_t neckLR = 90;	//这是一个坑，注意测试修改
+uint8_t	neckUD = 70;
 byte *msgfromPy;
+bool flag = false;
 
 #define CLK		  D2     
 #define CS        D3    
@@ -168,6 +169,12 @@ void setup() {
   client.setCallback(Receive);
   myser.attach(wir1);
   myser2.attach(wir2);
+
+  lc.shutdown(0, false);//
+  lc.setIntensity(0, 2);//
+  lc.clearDisplay(0);//   �
+
+  
 
 }
 
@@ -260,7 +267,6 @@ void reconnect() {
   }
 }
 void loop() {
-
   if (!client.connected()) {
     reconnect();//先让client连上，同时订阅相关的主题
   }
@@ -270,9 +276,10 @@ void loop() {
   //为什么要loop，这个指令大概就是client在连接之后一直连接着的
   if (BeControlled == 1)
   {
-	  LinkUP();
 	  control();
+    flag = true;
   }	  
+  else flag = false; 
   
 
 
@@ -281,7 +288,6 @@ void FaceControl(byte *face)
 {
 	lc.clearDisplay(0);
 	DrawFaceByColumn(face);
-	delay(2000);
 	//blinkTime = random(5, 180);
 }
 void control()
@@ -304,40 +310,40 @@ void control()
 	switch (facecon)
 	{//感觉像是嵌入式开发
 	case 1: {
-		FaceControl(heart);
+ // lc.clearDisplay(0);
+		DrawFaceByColumn(heart);
 		break;
 	}case 2: {
-		FaceControl(happy);
+    //lc.clearDisplay(0);
+		DrawFaceByColumn(happy);
 			break;
 	}case 3: {
-		FaceControl(sad);
+   // lc.clearDisplay(0);
+		DrawFaceByColumn(sad);
 			break;
 	}case 4: {
-		FaceControl(angry);
+   // lc.clearDisplay(0);
+		DrawFaceByColumn(angry);
 			break;
 	}case 5: {
-		FaceControl(snicker);
+    //lc.clearDisplay(0);
+		DrawFaceByColumn(snicker);
 			break;
 	}case 6: {
-		lc.clearDisplay(0);
+		//lc.clearDisplay(0);
 		WriteWordsColumn();
 		break;
 	}
 	default: {
+    LinkUP();
 		break;
 	}	
 	}
 
 	if (neckcon)
 		controlneck();
-	
 
-}
-uint8_t JudgeBlinkTime()
-{
-	if (blinkTime < sizeof(blinkIndex))
-		return blinkIndex[blinkTime];
-	else return 0;
+  
 
 }
 void DrawFaceByColumn(byte *face)
@@ -352,15 +358,16 @@ void controlneck()
 	//控制舵机
 	//neck == random(0,180)
 	//需要测试才能知道左右
-	
-	if (neckcon == 1&& neckLR!=0)
+	if (neckcon == 1)
 		neckLR -= step;
-	else if (neckcon == 2&& neckLR != 180)
+	else if (neckcon == 2 )
 		neckLR += step;
-	if (neckcon == 3 && neckUD != 0)
+	if (neckcon == 3 )
 		neckUD -= step;
-	else if (neckcon == 4 && neckUD != 180)
+	else if (neckcon == 4 )
 		neckUD += step;
+
+   neckcon = 0;
 
 }
 
@@ -380,7 +387,6 @@ void WriteWordsColumn()
 }
 void LinkUP()
 {
-	for(int i=0;i<=800;i++)
 	DrawFaceByColumn(snicker);
 }
 
