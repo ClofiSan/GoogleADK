@@ -163,10 +163,10 @@ byte sad[8]{
 
 void setup() {
   Serial.begin(115200);
-  setup_wifi();//连接wifi
+  setup_wifi();
   client.setServer(mqtt_server, 1883);
-  //只想intopic中的那个消息指针
   client.setCallback(Receive);
+
   myser.attach(wir1);
   myser2.attach(wir2);
 
@@ -272,8 +272,7 @@ void loop() {
   }
   client.loop();
   encodeJson();
-  client.publish("NodeToAnd", msgtoAnd);
-  //为什么要loop，这个指令大概就是client在连接之后一直连接着的
+ // client.publish("NodeToAnd", msgtoAnd);
   if (BeControlled == 1)
   {
 	  control();
@@ -292,19 +291,9 @@ void FaceControl(byte *face)
 }
 void control()
 {
-	//整个控制的环节
-	//舵机的控制输出
-	//neckLR和neckUD需要初始化
 
-	//重点就在这里，如何设计这个部分
 	myser.write(neckUD);
 	myser2.write(neckLR);
-	//控制face其实就是一个分支
-
-	//没有输入控制信号的时候应该是一张normalface
-	//DrawFaceByColumn(normalFace[(blinkIndex[JudgeBlinkTime()])]);
-	//if (--blinkTime == 0) blinkTime = random(5, 180);
-	
 
 	
 	switch (facecon)

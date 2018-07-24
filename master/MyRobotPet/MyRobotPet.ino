@@ -2,7 +2,7 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include "SPI.h"
-#include "LedControl.h"
+#include <LedControl.h>
 #include <Servo.h>
 /*
 pub:NodeToAnd
@@ -21,7 +21,7 @@ PyToNode
 //wifi锟借定锟斤拷mqtt锟斤拷锟斤拷锟斤拷锟斤拷锟借定
 const char* ssid = "Napoleon";
 const char* password = "19980909qaz";
-const char* mqtt_server = "123.206.127.199";
+const char* mqtt_server = "119.23.227.254:1883";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -29,7 +29,6 @@ long lastMsg = 0;
 int value = 0;
 char msgfromAnd[60];
 char msgtoAnd[40];
-byte msgfromPy[200];
 //锟斤拷锟狡的诧拷锟斤拷,也锟斤拷json锟斤拷式锟斤拷锟斤拷锟絤sg
 uint8_t
 BeControlled = 0, //锟介看锟角否被匡拷锟斤拷
@@ -44,10 +43,12 @@ LedControl lc = LedControl(DIN, CLK, CS, 1);
 //锟斤拷锟斤拷瓒�
 #define wir1 D7
 #define wir2 D8
-const uint8_t step = 10;
+uint8_t step = 10;
 uint8_t neckLR = 0; //锟斤拷锟斤拷一锟斤拷锟接ｏ拷注锟斤拷锟斤拷锟斤拷薷锟�
 uint8_t neckUD = 0;
+byte *msgfromPy;
 uint8_t istouch = 0;
+
 byte
 sadFace[][8] = {    // Eye animation frames
 	{
@@ -262,6 +263,60 @@ botherFace[][8] = {    // Eye animation frames
 						B00000000 }
 
 };
+byte heart[8]{
+
+	B00000000,
+	B01100110,
+	B11111111,
+	B11111111,
+	B11111111,
+	B01111110,
+	B00111100,
+	B00011000,
+};
+byte snicker[8]{
+
+	B00000000,
+	B11100111,
+	B00000000,
+	B00000000,
+	B11111111,
+	B11011011,
+	B01011010,
+	B00111100,
+};
+byte happy[8]{
+	B0000000,
+	B0110011,
+	B0110011,
+	B0000000,
+	B0000000,
+	B0100010,
+	B0011100,
+	B0000000,
+};
+byte angry[8]{
+	B00000000,
+	B10000001,
+	B01100110,
+	B00000000,
+	B00011000,
+	B00111100,
+	B01111110,
+	B11111111,
+
+};
+byte sad[8]{
+	B00000000,
+	B00100100,
+	B01000010,
+	B10000001,
+	B00000000,
+	B00111100,
+	B01000010,
+	B10000001,
+
+};
 
 
 Servo myser;
@@ -307,10 +362,18 @@ unsigned long checkMillis, touchMillis, nowMillis; //锟斤拷锟斤拷时锟斤
 void setup()
 {
 	Serial.begin(115200);
+	
+	setup_wifi();
+	client.setServer(mqtt_server, 1883);
+	client.setCallback(Receive);
+
+	
 	pinMode(D6, INPUT);
 	randomSeed(analogRead(analog));
 	myser.attach(wir1);
 	myser2.attach(wir2);
+
+
 
 	//LedControl锟侥匡拷亩锟斤拷锟�
 	lc.shutdown(0, false);//锟节碉拷模式
@@ -349,20 +412,20 @@ void setup()
 void setup_wifi() {
 
 	delay(10);
-	//Serial.println();
-	//Serial.print("Connecting to ");
-	//Serial.println(ssid);
+	Serial.println();
+	Serial.print("Connecting to ");
+	Serial.println(ssid);
 
 	WiFi.begin(ssid, password);
 
 	while (WiFi.status() != WL_CONNECTED) {
-		//delay(500);
-		//Serial.print(".");
+		delay(500);
+		Serial.print(".");
 	}
-	//Serial.println("");
-	//Serial.println("WiFi connected");
-	//Serial.println("IP address: ");
-	//Serial.println(WiFi.localIP());
+	Serial.println("");
+	Serial.println("WiFi connected");
+	Serial.println("IP address: ");
+	Serial.println(WiFi.localIP());
 }
 void Receive(char* topic, byte* payload, unsigned int length) {
 
@@ -379,12 +442,16 @@ void Receive(char* topic, byte* payload, unsigned int length) {
 	}
 
 	else {
-		for (int i = 0; i < length; i++) {
+		msgfromPy = new byte[300];
+		int i = 0;
+		for (i = 0; i < length; i++) {
 			msgfromPy[i] = (byte)payload[i];
 			Serial.print(msgfromPy[i]);
 			Serial.print(" ");
 		}
+		msgfromPy[i] = '\0';
 		Serial.println();
+
 	}
 }
 void decodeJson(char msg[]) {
@@ -431,28 +498,7 @@ void reconnect() {
 
 
 
-//锟斤拷锟斤拷锟角非匡拷锟狡诧拷锟斤拷
-void MqttAndJson()
-{
-	//执锟斤拷mqtt锟斤拷氐牟锟斤拷锟�
 
-}
-void controlneck()
-{
-	//锟斤拷锟狡讹拷锟�
-}
-void controlface()
-{
-	//锟斤拷锟狡憋拷锟斤拷牟锟斤拷锟�
-}
-void WriteWordsColumn()
-{
-	//锟斤拷写锟斤拷锟秸碉拷锟斤拷锟街ｏ拷注锟斤拷锟轿斤拷
-}
-void LinkUP()
-{
-	//锟斤拷锟斤拷锟轿接的猴拷锟斤拷锟斤拷锟斤拷止锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷
-}
 void GazeAprh(int8_t x, int8_t y)
 {
 	//锟斤拷setled锟劫度匡拷锟杰伙拷锟斤拷
@@ -609,16 +655,29 @@ void CheckTouch()
 }
 void loop()
 {
-
-	BlinkFace();
-	MoveGaze();
-
-	touchMillis = millis();
-	while (millis() - touchMillis < 40)
+	if (!client.connected()) {
+		reconnect();
+	}
+	client.loop();
+	//encodeJson();
+	// client.publish("NodeToAnd", msgtoAnd);
+	if (!BeControlled)
+	{
+		BlinkFace();
+		MoveGaze();
+		touchMillis = millis();
+		while (millis() - touchMillis < 40)
 		{
-      istouch = 0;
-		  CheckTouch();
-		  }
+			istouch = 0;
+			CheckTouch();
+		}
+	}
+	else
+	{
+		control();
+	}
+	
+	
    
 	/*if (!client.connected()) {
 	reconnect();//锟斤拷锟斤拷client锟斤拷锟较ｏ拷同时锟斤拷锟斤拷锟斤拷氐锟斤拷锟斤拷锟�
@@ -627,6 +686,102 @@ void loop()
 	encodeJson();
 	client.publish("NodeToAnd", msgtoAnd);*/
 
+}
+
+void FaceControl(byte *face)
+{
+	lc.clearDisplay(0);
+	DrawFaceByColumn(face);
+	//blinkTime = random(5, 180);
+}
+void control()
+{
+
+	myser.write(neckUD);
+	myser2.write(neckLR);
+
+
+	switch (facecon)
+	{//感觉像是嵌入式开发
+	case 1: {
+		// lc.clearDisplay(0);
+		DrawFaceByColumn(heart);
+		break;
+	}case 2: {
+		//lc.clearDisplay(0);
+		DrawFaceByColumn(happy);
+		break;
+	}case 3: {
+		// lc.clearDisplay(0);
+		DrawFaceByColumn(sad);
+		break;
+	}case 4: {
+		// lc.clearDisplay(0);
+		DrawFaceByColumn(angry);
+		break;
+	}case 5: {
+		//lc.clearDisplay(0);
+		DrawFaceByColumn(snicker);
+		break;
+	}case 6: {
+		//lc.clearDisplay(0);
+		WriteWordsColumn();
+		break;
+	}
+	default: {
+		LinkUP();
+		break;
+	}
+	}
+
+	if (neckcon)
+		controlneck();
+
+
+
+}
+void DrawFaceByColumn(byte *face)
+{
+	for (int i = 0; i<8; i++)
+	{
+		lc.setColumn(0, i, face[i]);
+	}
+}
+void controlneck()
+{
+	//控制舵机
+	//neck == random(0,180)
+	//需要测试才能知道左右
+	if (neckcon == 1)
+		neckLR -= step;
+	else if (neckcon == 2)
+		neckLR += step;
+	if (neckcon == 3)
+		neckUD -= step;
+	else if (neckcon == 4)
+		neckUD += step;
+
+	neckcon = 0;
+
+}
+
+void WriteWordsColumn()
+{
+	//书写接收到的字，注意衔接
+	int n;
+	int row = 0;
+	for (n = 0; n < sizeof(msgfromPy); n++)
+	{
+		row = n % 8;
+		if (row == 0)
+			delay(100);
+		lc.setColumn(0, row, msgfromPy[n]);
+	}
+	delete msgfromPy;
+}
+void LinkUP()
+{
+	DrawFaceByColumn(snicker);
 }
 
 /*
