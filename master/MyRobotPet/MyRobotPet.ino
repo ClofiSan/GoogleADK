@@ -1,18 +1,19 @@
-﻿#include <ESP8266WiFi.h>
+#include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
-#include "SPI.h"
+#include <SPI.h>
 #include <LedControl.h>
 #include <Servo.h>
 /*
 pub:NodeToAnd
 sub:AndToNode
-PyToNode
+	PyToNode
 */
 //#include "WaveHC.h"
 //#include "WaveUtil.h"
 /*
 2018/7/19  bug锟斤拷未锟斤拷傻墓锟斤拷艿锟斤拷锟斤拷锟斤拷
+
 1锟斤拷锟斤拷锟狡碉拷锟斤拷锟�
 2锟斤拷
 
@@ -21,38 +22,38 @@ PyToNode
 //wifi锟借定锟斤拷mqtt锟斤拷锟斤拷锟斤拷锟斤拷锟借定
 const char* ssid = "Napoleon";
 const char* password = "19980909qaz";
-const char* mqtt_server = "119.23.227.254:1883";
-
+const char* mqtt_server = "119.23.227.254";
+int lenthofpy;
 WiFiClient espClient;
 PubSubClient client(espClient);
-long lastMsg = 0;
-int value = 0;
+//long lastMsg = 0;
+//int value = 0;
 char msgfromAnd[60];
 char msgtoAnd[40];
-//锟斤拷锟狡的诧拷锟斤拷,也锟斤拷json锟斤拷式锟斤拷锟斤拷锟絤sg
+byte *msgfromPy;
+
 uint8_t
-BeControlled = 0, //锟介看锟角否被匡拷锟斤拷
+BeControlled = 0, 
 neckcon = 0,
 facecon = 0;
-//LED锟斤拷锟狡碉拷锟斤拷锟斤拷
+
 #define CLK     D2     
 #define CS        D3    
 #define DIN       D1      
 LedControl lc = LedControl(DIN, CLK, CS, 1);
 
-//锟斤拷锟斤拷瓒�
+
 #define wir1 D7
 #define wir2 D8
 uint8_t step = 10;
-uint8_t neckLR = 0; //锟斤拷锟斤拷一锟斤拷锟接ｏ拷注锟斤拷锟斤拷锟斤拷薷锟�
-uint8_t neckUD = 0;
-byte *msgfromPy;
-uint8_t istouch = 0;
+uint8_t neckLR = 90; //锟斤拷锟斤拷一锟斤拷锟接ｏ拷注锟斤拷锟斤拷锟斤拷薷锟�
+uint8_t neckUD = 90;
+
 
 byte
-sadFace[][8] = {    // Eye animation frames
+sadFace[][8] = {    
 	{
-		B00100100,         // Fully open sad eye
+		B00100100,        
 		B01000010,
 		B10000001,
 		B00111100,
@@ -82,32 +83,32 @@ sadFace[][8] = {    // Eye animation frames
 		B11111111,
 		B11111111 }
 		,
-		{
-			B00100100,
-			B01000010,
-			B10000001,
-			B00000000,
-			B00000000,
-			B00000000,
-			B01111110,
-			B11111111
+	{
+		B00100100,
+		B01000010,
+		B10000001,
+		B00000000,
+		B00000000,
+		B00000000,
+		B01111110,
+		B11111111
 		},
-		{
-			B00100100,         // Fully closed sad eye
-			B01000010,
-			B10000001,
-			B00000000,
-			B00000000,
-			B00000000,
-			B00000000,
-			B11111111 }
+	{
+		B00100100,         
+		B01000010,
+		B10000001,
+		B00000000,
+		B00000000,
+		B00000000,
+		B00000000,
+		B11111111 }
 
 };
 
 byte
-normalFace[][8] = {    // Eye animation frames
+normalFace[][8] = {    
 	{
-		B00111100,         // Fully open eye
+		B00111100,         
 		B01111110,
 		B11111111,
 		B11111111,
@@ -116,51 +117,51 @@ normalFace[][8] = {    // Eye animation frames
 		B01111110,
 		B00111100 }
 		,
-		{
-			B00000000,
-			B01111110,
-			B11111111,
-			B11111111,
-			B11111111,
-			B11111111,
-			B01111110,
-			B00111100 }
+	{
+		B00000000,
+		B01111110,
+		B11111111,
+		B11111111,
+		B11111111,
+		B11111111,
+		B01111110,
+		B00111100 }
 			,
-			{
-				B00000000,
-				B00000000,
-				B00111100,
-				B11111111,
-				B11111111,
-				B11111111,
-				B00111100,
-				B00000000 }
+	{
+		B00000000,
+		B00000000,
+		B00111100,
+		B11111111,
+		B11111111,
+		B11111111,
+		B00111100,
+		B00000000 }
 				,
-				{
-					B00000000,
-					B00000000,
-					B00000000,
-					B00111100,
-					B11111111,
-					B01111110,
-					B00011000,
-					B00000000 }
+	{
+		B00000000,
+		B00000000,
+		B00000000,
+		B00111100,
+		B11111111,
+		B01111110,
+		B00011000,
+		B00000000 }
 					,
-					{
-						B00000000,         // Fully closed eye
-						B00000000,
-						B00000000,
-						B00000000,
-						B10000001,
-						B01111110,
-						B00000000,
-						B00000000 }
+	{
+		B00000000,         
+		B00000000,
+		B00000000,
+		B00000000,
+		B10000001,
+		B01111110,
+		B00000000,
+		B00000000 }
 };
 
 byte
-happyFace[][8] = {    // Eye animation frames
+happyFace[][8] = {    
 	{
-		B00111100,         // Fully open happy eye
+		B00111100,        
 		B01111110,
 		B11111111,
 		B11111111,
@@ -169,51 +170,51 @@ happyFace[][8] = {    // Eye animation frames
 		B10000001,
 		B01111110 }
 		,
-		{
-			B00000000,
-			B01111110,
-			B11111111,
-			B11111111,
-			B11111111,
-			B00000000,
-			B10000001,
-			B01111110 }
+	{
+		B00000000,
+		B01111110,
+		B11111111,
+		B11111111,
+		B11111111,
+		B00000000,
+		B10000001,
+		B01111110 }
 			,
-			{
-				B00000000,
-				B00000000,
-				B01111110,
-				B11111111,
-				B11111111,
-				B00000000,
-				B10000001,
-				B01111110 }
+	{
+		B00000000,
+		B00000000,
+		B01111110,
+		B11111111,
+		B11111111,
+		B00000000,
+		B10000001,
+		B01111110 }
 				,
-				{
-					B00000000,
-					B00000000,
-					B00000000,
-					B01111110,
-					B11111111,
-					B00000000,
-					B10000001,
-					B01111110 }
-					,
-					{
-						B00000000,         // Fully closed happy eye      
-						B00000000,
-						B00000000,
-						B01111110,
-						B10000001,
-						B00000000,
-						B10000001,
-						B01111110 }
+	{
+		B00000000,
+		B00000000,
+		B00000000,
+		B01111110,
+		B11111111,
+		B00000000,
+		B10000001,
+		B01111110 }
+		,
+	{
+		B00000000,             
+		B00000000,
+		B00000000,
+		B01111110,
+		B10000001,
+		B00000000,
+		B10000001,
+		B01111110 }
 };
 
 byte
-botherFace[][8] = {    // Eye animation frames
+botherFace[][8] = {    
 	{
-		B10000001,         // Fully open annoyed eye
+		B10000001,        
 		B01100110,
 		B00000000,
 		B11111111,
@@ -222,45 +223,45 @@ botherFace[][8] = {    // Eye animation frames
 		B01111110,
 		B00111100 }
 		,
-		{
-			B10000001,
-			B01100110,
-			B00000000,
-			B11111111,
-			B11111111,
-			B11111111,
-			B01111110,
-			B00000000 }
-			,
-			{
-				B10000001,
-				B01100110,
-				B00000000,
-				B11111111,
-				B11111111,
-				B01111110,
-				B00000000,
-				B00000000 }
+	{
+		B10000001,
+		B01100110,
+		B00000000,
+		B11111111,
+		B11111111,
+		B11111111,
+		B01111110,
+		B00000000 }
+	,
+	{
+		B10000001,
+		B01100110,
+		B00000000,
+		B11111111,
+		B11111111,
+		B01111110,
+		B00000000,
+		B00000000 }
 				,
-				{
-					B10000001,
-					B01100110,
-					B00000000,
-					B11111111,
-					B01111110,
-					B00000000,
-					B00000000,
-					B00000000 }
+	{
+		B10000001,
+		B01100110,
+		B00000000,
+		B11111111,
+		B01111110,
+		B00000000,
+		B00000000,
+		B00000000 }
 					,
-					{
-						B10000001,         // Fully closed annoyed eye
-						B01100110,
-						B00000000,
-						B10000001,
-						B01111110,
-						B00000000,
-						B00000000,
-						B00000000 }
+	{
+		B10000001,         
+		B01100110,
+		B00000000,
+		B10000001,
+		B01111110,
+		B00000000,
+		B00000000,
+		B00000000 }
 
 };
 byte heart[8]{
@@ -337,16 +338,16 @@ dX = 0, dY = 0;
 int TouchNum = 0;
 int TouchReact = 15;
 byte mood = 1;
+uint8_t istouch = 0;
 //const byte vibration PROGMEM = ;//锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 
 //const int TouchLevel PROGMEM = 512;//锟斤拷锟斤拷锟斤拷位锟侥等硷拷
-#define vibration D5
+//#define vibration D5
 long PreMillis = 0;
 #define analog A0
 
 const int decay = 30000;  //衰锟斤拷时锟斤拷       
 
 unsigned long checkMillis, touchMillis, nowMillis; //锟斤拷锟斤拷时锟斤拷亩锟斤拷锟�
-
 												   //锟斤拷锟狡诧拷锟街的憋拷锟斤拷
 												   //锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟侥诧拷锟斤拷
 												   //SdReader card;    // 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷息
@@ -442,6 +443,7 @@ void Receive(char* topic, byte* payload, unsigned int length) {
 	}
 
 	else {
+		delete msgfromPy;
 		msgfromPy = new byte[300];
 		int i = 0;
 		for (i = 0; i < length; i++) {
@@ -449,7 +451,7 @@ void Receive(char* topic, byte* payload, unsigned int length) {
 			Serial.print(msgfromPy[i]);
 			Serial.print(" ");
 		}
-		msgfromPy[i] = '\0';
+		lenthofpy = length;
 		Serial.println();
 
 	}
@@ -495,9 +497,6 @@ void reconnect() {
 		}
 	}
 }
-
-
-
 
 void GazeAprh(int8_t x, int8_t y)
 {
@@ -574,7 +573,7 @@ void DrawFaceByColumn(byte *face)
 	for (int i = 0; i<8; i++)
 	{
 		lc.setColumn(0, i, face[i]);
-		Serial.println("i am drawing");
+		//Serial.println("i am drawing");
 	}
 }
 void BlinkFace()
@@ -602,7 +601,6 @@ uint8_t JudgeBlinkTime()
 	else return 0;
 
 }
-
 void MoveNeck()
 {
 	//锟狡讹拷锟斤拷锟�
@@ -612,8 +610,6 @@ void MoveNeck()
 	myser2.write(180 - (x2 * 10));
 
 }
-
-
 void CheckTouch()
 {
 
@@ -645,22 +641,23 @@ void CheckTouch()
 		if (TouchReact == 30) TouchReact = 15;
 		if (TouchReact > 40) TouchReact = 40;
 	}
- Serial.print("touchnum ");
+	  Serial.print("touchnum ");
       Serial.print(TouchNum);
       
       Serial.print("mood ");
       Serial.print(mood);
-     Serial.print("TouchReact ");
+      Serial.print("TouchReact ");
       Serial.println(TouchReact);
 }
+
 void loop()
 {
 	if (!client.connected()) {
 		reconnect();
 	}
 	client.loop();
-	//encodeJson();
-	// client.publish("NodeToAnd", msgtoAnd);
+	encodeJson();
+	client.publish("NodeToAnd", msgtoAnd);
 	if (!BeControlled)
 	{
 		BlinkFace();
@@ -690,7 +687,6 @@ void loop()
 
 void FaceControl(byte *face)
 {
-	lc.clearDisplay(0);
 	DrawFaceByColumn(face);
 	//blinkTime = random(5, 180);
 }
@@ -740,13 +736,6 @@ void control()
 
 
 }
-void DrawFaceByColumn(byte *face)
-{
-	for (int i = 0; i<8; i++)
-	{
-		lc.setColumn(0, i, face[i]);
-	}
-}
 void controlneck()
 {
 	//控制舵机
@@ -764,23 +753,23 @@ void controlneck()
 	neckcon = 0;
 
 }
-
 void WriteWordsColumn()
 {
 	//书写接收到的字，注意衔接
 	int n;
 	int row = 0;
-	for (n = 0; n < sizeof(msgfromPy); n++)
+	for (n = 0; n < lenthofpy; n++)
 	{
 		row = n % 8;
-		if (row == 0)
 			delay(100);
 		lc.setColumn(0, row, msgfromPy[n]);
 	}
-	delete msgfromPy;
+
+	
 }
 void LinkUP()
 {
+	//这里原本是用来衔接的
 	DrawFaceByColumn(snicker);
 }
 
@@ -883,3 +872,4 @@ Serial.println("Not a WAV");
 wave.play();
 }*/
 
+ 

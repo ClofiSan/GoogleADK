@@ -15,10 +15,11 @@
 */
 const char* ssid = "Napoleon";
 const char* password = "19980909qaz";
-const char* mqtt_server = "123.206.127.199";
+const char* mqtt_server = "119.23.227.254";
 
 Servo myser;
 Servo myser2;
+
 
 
 WiFiClient espClient;
@@ -95,10 +96,11 @@ facecon = 0;
 //舵机设定
 #define wir1 D7
 #define wir2 D8
-uint8_t step = 10;
+uint8_t step = 20;
 uint8_t neckLR = 90;	//这是一个坑，注意测试修改
-uint8_t	neckUD = 70;
+uint8_t	neckUD = 90;
 byte *msgfromPy;
+int lenthofpy;
 bool flag = false;
 
 #define CLK		  D2     
@@ -164,6 +166,7 @@ byte sad[8]{
 void setup() {
   Serial.begin(115200);
   setup_wifi();
+  
   client.setServer(mqtt_server, 1883);
   client.setCallback(Receive);
 
@@ -200,10 +203,10 @@ void decodeJson(char msg[]) {
   //解析AndToNode
   //如何解析不同的东西，难道格式写一样？？
   DynamicJsonBuffer jsonBuffer;
-  JsonObject& root = jsonBuffer.parseObject(msg);
-  BeControlled = root["BeControlled"];
-  neckcon = root["neckcon"];
-  facecon = root["facecon"];
+  JsonObject& root = jsonBuffer.parseObject(msg); 
+  BeControlled = root["BeControlled"]; 
+  neckcon = root["neckcon"]; 
+  facecon = root["facecon"]; 
 
   Serial.print("BeControlled:");
   Serial.print(BeControlled);
@@ -225,16 +228,17 @@ void Receive(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message from  [");
   Serial.print(topic);
   Serial.print("] ");
-  if (!strcmp(topic, "AndToNode"))
-  {
-    for (int i = 0; i < length; i++)
-    {
-      msgfromAnd[i] = payload[i];
-    }
-    decodeJson(msgfromAnd);
-  }
+   if (!strcmp(topic, "AndToNode")) 
+  { 
+    for (int i = 0; i < length; i++) 
+    { 
+      msgfromAnd[i] = payload[i]; 
+    } 
+    decodeJson(msgfromAnd); 
+  } 
 
   else {
+    delete msgfromPy;
 	  msgfromPy = new byte[300];
 	int i = 0;
     for ( i = 0; i < length; i++) {
@@ -242,12 +246,12 @@ void Receive(char* topic, byte* payload, unsigned int length) {
       Serial.print(msgfromPy[i]);
       Serial.print(" ");
     }
-	msgfromPy[i] = '\0'; 
+    lenthofpy = length;
     Serial.println();
 
   }
-
-
+//可能是arduino处理数据要点延迟，不可能！
+//可能是client的东西重复了
 }
 
 void reconnect() {
@@ -256,8 +260,9 @@ void reconnect() {
     if (client.connect("ESP8266Client")) {
       Serial.println("connected");
       //client.publish(outTopic, "hello world");
-      client.subscribe("AndToNode", 1); //这仅仅是一个订阅而已，订阅了之前设定的主题
-      client.subscribe("PyToNode", 1);
+      client.subscribe("AndToNode",1); //这仅仅是一个订阅而已，订阅了之前设定的主题
+     client.subscribe("PyToNode",1);
+   
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -271,8 +276,8 @@ void loop() {
     reconnect();//先让client连上，同时订阅相关的主题
   }
   client.loop();
-  encodeJson();
- // client.publish("NodeToAnd", msgtoAnd);
+  //encodeJson(); 
+  client.publish("NodeToAnd", msgtoAnd); 
   if (BeControlled == 1)
   {
 	  control();
@@ -365,14 +370,14 @@ void WriteWordsColumn()
 	//书写接收到的字，注意衔接
 	int n;
 	int row=0;
-	for (n = 0; n < sizeof(msgfromPy); n++)
+	for (n = 0; n < lenthofpy; n++)
 	{
 		row = n % 8;
-		if (row == 0)
-			delay(100);
+		//if (row == 0)
+			delay(300);
 		lc.setColumn(0, row,msgfromPy[n]);
 	}
-	delete msgfromPy;
+	//delete msgfromPy;
 }
 void LinkUP()
 {
