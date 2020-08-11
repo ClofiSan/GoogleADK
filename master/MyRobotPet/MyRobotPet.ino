@@ -12,13 +12,12 @@ sub:AndToNode
 //#include "WaveHC.h"
 //#include "WaveUtil.h"
 /*
-2018/7/19  bug锟斤拷未锟斤拷傻墓锟斤拷艿锟斤拷锟斤拷锟斤拷
-
-1.这个是什么其实我也不知道www
+2018.9.4
+代码和文档的最终确认
 
 */
 
-//wifi锟借定锟斤拷mqtt锟斤拷锟斤拷锟斤拷锟斤拷锟借定
+
 const char* ssid = "Napoleon";
 const char* password = "19980909qaz";
 const char* mqtt_server = "119.23.227.254";
@@ -29,12 +28,17 @@ PubSubClient client(espClient);
 //int value = 0;
 char msgfromAnd[60];
 char msgtoAnd[40];
+char msgDeface[40];
 byte *msgfromPy;
 
 uint8_t
 BeControlled = 0, 
 neckcon = 0,
-facecon = 0;
+facecon = 0,
+Deface = 0;
+
+int U_D = 0 ,
+L_R = 0;
 
 #define CLK     D2     
 #define CS        D3    
@@ -45,7 +49,7 @@ LedControl lc = LedControl(DIN, CLK, CS, 1);
 #define wir1 D7
 #define wir2 D8
 uint8_t step = 10;
-uint8_t neckLR = 90; //锟斤拷锟斤拷一锟斤拷锟接ｏ拷注锟斤拷锟斤拷锟斤拷薷锟�
+uint8_t neckLR = 90; 
 uint8_t neckUD = 90;
 
 
@@ -325,12 +329,12 @@ Servo myser2;
 
 uint8_t
 blinkIndex[] = { 1, 2, 3, 4, 3, 2, 1 }, //sizeof = 7 
-blinkTime = 100,          //锟斤拷实锟斤拷眨锟桔碉拷锟斤拷锟斤拷
-gazeTime = 75,            //锟斤拷一锟斤拷锟桔撅拷锟狡讹拷锟斤拷时锟戒倒锟斤拷时//注锟斤拷锟斤拷锟斤拷
-gazeMove = 50;            //锟斤拷锟斤拷锟斤拷锟斤拷锟绞憋拷锟�
+blinkTime = 100,          
+gazeTime = 75,           
+gazeMove = 50;            
 int8_t
-gazeX = 3, gazeY = 3,       //锟斤拷锟斤拷锟斤拷锟斤拷锟�
-newX = 3, newY = 3,         //锟铰碉拷锟斤拷锟斤拷锟斤拷锟斤拷锟�
+gazeX = 3, gazeY = 3,       
+newX = 3, newY = 3,         
 dX = 0, dY = 0;
 
 
@@ -338,29 +342,17 @@ int TouchNum = 0;
 int TouchReact = 15;
 byte mood = 1;
 uint8_t istouch = 0;
-//const byte vibration PROGMEM = ;//锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷 
-//const int TouchLevel PROGMEM = 512;//锟斤拷锟斤拷锟斤拷位锟侥等硷拷
-//#define vibration D5
+
 long PreMillis = 0;
 #define analog A0
 
-const int decay = 30000;  //衰锟斤拷时锟斤拷       
+const int decay = 30000;        
 
-unsigned long checkMillis, touchMillis, nowMillis; //锟斤拷锟斤拷时锟斤拷亩锟斤拷锟�
-												   //锟斤拷锟狡诧拷锟街的憋拷锟斤拷
-												   //锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟侥诧拷锟斤拷
-												   //SdReader card;    // 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷息
-												   //FatVolume vol;    // 锟斤拷锟斤拷锟斤拷锟斤拷锟较�
-												   //FatReader root;   //锟斤拷锟侥硷拷系统锟斤拷锟斤拷目录锟斤拷息
-												   //WaveHC wave;      //  锟斤拷锟斤拷锟斤拷锟斤拷锟侥讹拷锟斤拷一锟斤拷只锟斤拷锟斤拷一锟斤拷
-
-												   //uint8_t dirLevel; // //锟侥硷拷/目录锟斤拷锟狡碉拷锟斤拷锟斤拷锟斤拷锟斤拷 
-												   //dir_t dirBuf;     //  锟侥硷拷锟侥讹拷目录锟侥的伙拷锟斤拷锟斤拷
-												   //FatReader f;      // 锟斤拷锟斤拷锟斤拷锟节诧拷锟脚碉拷锟斤拷锟斤拷
+unsigned long checkMillis, touchMillis, nowMillis;       
 
 
 void setup()
-{
+{   
 	Serial.begin(115200);
 	
 	setup_wifi();
@@ -375,38 +367,12 @@ void setup()
 
 
 
-	//LedControl锟侥匡拷亩锟斤拷锟�
-	lc.shutdown(0, false);//锟节碉拷模式
-	lc.setIntensity(0, 2);//锟斤拷锟斤拷LED锟斤拷锟斤拷
-	lc.clearDisplay(0);   //锟斤拷锟斤拷锟侥�
+	
+	lc.shutdown(0, false);
+	lc.setIntensity(0, 2);
+	lc.clearDisplay(0);   
 
-						  //wifi锟斤拷mqtt锟斤拷锟借定
-						  //setup_wifi();//锟斤拷锟斤拷wifi
-						  //client.setServer(mqtt_server, 1883);
-						  //client.setCallback(Receive); //只锟斤拷intopic锟叫碉拷锟角革拷锟斤拷息指锟斤拷
-
-						  //Wavehc锟斤拷锟斤拷瓒�
-						  //锟斤拷锟絪d锟斤拷锟斤拷始锟斤拷失锟斤拷
-						  /*  if (!card.init(true)) {
-
-						  }
-						  //锟斤拷始锟斤拷锟斤拷锟斤拷锟叫讹拷
-						  uint8_t part;
-						  for (part = 0; part < 5; part++) {
-						  if (vol.init(card, part))
-						  break;
-						  }
-						  if (part == 5) {
-						  sdErrorCheck();
-						  while (1);
-						  }
-						  //锟津开革拷目录失锟斤拷
-						  if (!root.openRoot(vol)) {
-						  }
-						  //锟斤拷印锟斤拷锟斤拷锟斤拷锟侥硷拷
-						  root.ls(LS_R | LS_FLAG_FRAGMENTED);//锟斤拷锟斤拷锟斤拷
-
-						  */
+				
 }
 
 void setup_wifi() {
@@ -440,7 +406,14 @@ void Receive(char* topic, byte* payload, unsigned int length) {
 		}
 		decodeJson(msgfromAnd);
 	}
-
+else if (!strcmp(topic,"DeFace")){
+    
+    for (int i = 0; i < length; i++){
+        msgDeface[i] = payload[i];
+    }
+    decode_DeFace_Json(msgDeface)
+  
+  }
 	else {
 		delete msgfromPy;
 		msgfromPy = new byte[300];
@@ -456,8 +429,6 @@ void Receive(char* topic, byte* payload, unsigned int length) {
 	}
 }
 void decodeJson(char msg[]) {
-	//锟斤拷锟斤拷AndToNode
-	//锟斤拷谓锟斤拷锟斤拷锟酵拷亩锟斤拷锟斤拷锟斤拷训锟斤拷锟绞叫匆伙拷锟斤拷锟斤拷锟�
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& root = jsonBuffer.parseObject(msg);
 	BeControlled = root["BeControlled"];
@@ -471,8 +442,22 @@ void decodeJson(char msg[]) {
 	Serial.print("facecon:");
 	Serial.println(facecon);
 }
+void decode_DeFace_Json(char msg[]){
+  //专门用来解析来自人脸识别控制的json
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& root = jsonBuffer.parseObject(msg);
+  U_D = root["U_D"];
+  L_R = root["L_R"];
+  Deface = root["Deface"];
+  Serial.print("Deface");
+  Serial.print(Deface);
+  Serial.print("L_R");
+  Serial.print(L_R);
+  Serial.print("U_D");
+  Serial.print(U_D);
+  
+  }
 void encodeJson() {
-	//装锟斤拷json
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& root1 = jsonBuffer.createObject();
 	root1["mood"] = mood;
@@ -485,7 +470,7 @@ void reconnect() {
 		if (client.connect("ESP8266Client")) {
 			Serial.println("connected");
 			//client.publish(outTopic, "hello world");
-			client.subscribe("AndToNode", 1); //锟斤拷锟斤拷锟斤拷锟揭伙拷锟斤拷锟斤拷亩锟斤拷眩锟斤拷锟斤拷锟斤拷锟街帮拷瓒拷锟斤拷锟斤拷锟�
+			client.subscribe("AndToNode", 1);
 			client.subscribe("PyToNode", 1);
 		}
 		else {
@@ -499,7 +484,7 @@ void reconnect() {
 
 void GazeAprh(int8_t x, int8_t y)
 {
-	//锟斤拷setled锟劫度匡拷锟杰伙拷锟斤拷
+	
 	lc.setLed(0, y, 7 - x, false);
 	lc.setLed(0, y + 1, 7 - x, false);
 	lc.setLed(0, y, 7 - (x + 1), false);
@@ -531,19 +516,13 @@ void SetNewGaze() {
 void MoveGaze()
 {
 	if (--gazeTime <= gazeMove) {
-		//瞳锟阶碉拷锟借定锟角从碉拷锟斤拷锟酵硷拷锟斤拷锟斤拷诳锟�2*2
-		//锟斤拷锟斤拷胤锟揭拷锟酵拷椎木锟轿伙拷锟斤拷锟斤拷锟斤拷咏锟斤拷碌锟轿伙拷锟�
-		//newX - (dX * gazeTime / gazeMove) 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟接斤拷锟斤拷
+	
 		GazeAprh(newX - (dX * gazeTime / gazeMove), newY - (dY * gazeTime / gazeMove));
 		if (gazeTime == 0) {
 			gazeX = newX;
 			gazeY = newY;
 			do {
-				//new锟斤拷位锟矫固讹拷锟斤拷预锟矫碉拷锟斤拷锟疥范围锟斤拷锟斤拷 也锟斤拷锟斤拷一锟斤拷圆
-				//锟斤拷瞥锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷贫锟斤拷锟斤拷瓒拷锟斤拷碌亩锟斤拷锟�
-				//random锟侥诧拷锟斤拷锟斤拷实锟斤拷锟斤拷圈锟斤拷锟斤拷锟斤拷
-				//锟斤拷为3锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟剿空筹拷锟斤拷锟斤拷2*2锟斤拷锟斤拷锟斤拷锟�
-				//每锟街憋拷锟斤拷锟統锟斤拷围锟斤拷锟斤拷一锟斤拷锟斤拷
+			
 				SetNewGaze();
 				dX = newX - 3;
 				dY = newY - 3;
@@ -552,8 +531,9 @@ void MoveGaze()
 		}
 	}
 	else {
-		//锟桔撅拷锟斤拷锟斤拷锟斤拷时锟斤拷
 		GazeAprh(gazeX, gazeY);
+   if(Deface==0)
+   //没有检测到人脸就传统模式
 		MoveNeck();
 
 	}
@@ -577,10 +557,7 @@ void DrawFaceByColumn(byte *face)
 }
 void BlinkFace()
 {
-	//要锟斤拷锟斤拷值锟斤拷锟斤拷荩锟斤拷锟斤拷锟剿筹拷锟绞碉拷锟秸ｏ拷鄣锟叫э拷锟斤拷锟揭诧拷锟斤拷前锟斤拷锟揭伙拷锟斤拷锟剿筹拷锟饺ワ拷懦锟斤拷锟斤拷椋�
-	//也锟斤拷锟斤拷要锟斤拷锟斤拷index锟斤拷顺锟斤拷锟斤拷
-	//锟斤拷一锟斤拷锟斤拷锟斤拷锟斤拷全锟街碉拷顺锟津画筹拷位图锟斤拷锟较撅拷锟斤拷锟斤拷锟斤拷锟絣oop锟斤拷锟斤拷模锟揭诧拷锟斤拷锟剿抵灰伙拷纬锟斤拷殖锟揭伙拷锟酵硷拷秃锟斤拷锟�
-	//锟节讹拷锟斤拷锟斤拷锟绞憋拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟揭伙拷锟斤拷碌锟绞憋拷锟�
+	
 	lc.clearDisplay(0);
 	if (mood == 0)
 		DrawFaceByColumn(sadFace[(blinkIndex[JudgeBlinkTime()])]);
@@ -602,17 +579,17 @@ uint8_t JudgeBlinkTime()
 }
 void MoveNeck()
 {
-	//锟狡讹拷锟斤拷锟�
+	
 	int8_t y2 = 7 - gazeX;
 	int8_t x2 = gazeY;
-	myser.write(y2 * 10); //
+	myser.write(y2 * 10); 
 	myser2.write(180 - (x2 * 10));
 
 }
 void CheckTouch()
 {
 
-	//锟斤拷锟斤拷约锟斤拷欠癖淮锟斤拷锟�
+	
 
   istouch  = digitalRead(D6);
 	if (istouch)
@@ -649,6 +626,35 @@ void CheckTouch()
       Serial.println(TouchReact);
 }
 
+void Follow_Face(){
+
+      //检测到了人脸
+      //首先要判断上下还是左右
+      //如何提取出绝对值
+      //正常：上下120‘左右，左右90
+      //暂时设定成除以10’
+    int face_LR=0,face_UD=0;
+      //首先左右
+      if(L_R>0){
+        //左边旋转
+        myser.write(90+L_R/10);
+        }else {
+         myser.write(90+L_R/10);
+        }
+      if(U_D>0){
+        //左边旋转
+        myser.write(90+U_D/10);
+        }else {
+         myser.write(90+U_D/10);
+        }
+    
+       
+     
+}
+
+
+
+
 void loop()
 {
 	if (!client.connected()) {
@@ -656,11 +662,15 @@ void loop()
 	}
 	client.loop();
 	encodeJson();
+ //下面这句不能去掉
 	client.publish("NodeToAnd", msgtoAnd);
 	if (!BeControlled)
 	{
 		BlinkFace();
 		MoveGaze();
+   if(Deface==1){
+      Follow_Face();
+    }
 		touchMillis = millis();
 		while (millis() - touchMillis < 40)
 		{
@@ -676,7 +686,7 @@ void loop()
 	
    
 	/*if (!client.connected()) {
-	reconnect();//锟斤拷锟斤拷client锟斤拷锟较ｏ拷同时锟斤拷锟斤拷锟斤拷氐锟斤拷锟斤拷锟�
+	reconnect();
 	}
 	client.loop();
 	encodeJson();
@@ -697,7 +707,7 @@ void control()
 
 
 	switch (facecon)
-	{//感觉像是嵌入式开发
+	{
 	case 1: {
 		// lc.clearDisplay(0);
 		DrawFaceByColumn(heart);
@@ -738,8 +748,7 @@ void control()
 void controlneck()
 {
 	//控制舵机
-	//neck == random(0,180)
-	//需要测试才能知道左右
+	
 	if (neckcon == 1)
 		neckLR -= step;
 	else if (neckcon == 2)
